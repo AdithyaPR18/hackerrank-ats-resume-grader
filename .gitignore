@@ -1,0 +1,26 @@
+# Secrets & local env — NEVER commit real values
+.env
+.env.*
+*.env
+# ...but keep the example templates
+!.env.example
+!.env.local.example
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Locally-saved resume copies (storage fallback)
+uploads/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+next-env.d.ts
+
+# OS / editor
+.DS_Store
+*.log

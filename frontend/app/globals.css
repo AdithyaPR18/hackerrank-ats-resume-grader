@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  @apply text-slate-200 antialiased;
+  background-color: #141519;
+  background-image: radial-gradient(56rem 36rem at 50% -18%, rgba(129, 140, 248, 0.10), transparent 72%);
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+
+.bar-fill { transition: width 800ms cubic-bezier(0.22, 1, 0.36, 1); }
+
+/* Subtle dotted texture for the upload zone, etc. — calm, not flashy. */
+.card {
+  @apply rounded-2xl border border-white/10 bg-white/[0.035] backdrop-blur;
+}
+
+@media print {
+  .no-print { display: none !important; }
+  body { background: #fff !important; }
+  * { color: #0f172a !important; }
+  .card, .print-full { background: #fff !important; border: 1px solid #e2e8f0 !important; box-shadow: none !important; backdrop-filter: none !important; }
+}
