@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: resume-grader-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.9"
+      - key: SUPABASE_BUCKET
+        value: resumes
+      # Secrets — set these in the Render dashboard, NOT here:
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      # Set to your Vercel URL after the frontend is deployed:
+      - key: ALLOWED_ORIGINS
+        sync: false
