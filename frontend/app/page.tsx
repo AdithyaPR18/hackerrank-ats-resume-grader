@@ -163,6 +163,11 @@ export default function Home() {
     if (sampleRef.current) clearTimeout(sampleRef.current);
   }, []);
 
+  // Wake the (free-tier) backend on load so it's warm by the time someone uploads.
+  useEffect(() => {
+    fetch(`${API}/health`).catch(() => {});
+  }, []);
+
   const pickFile = (f: File | null) => {
     setError(null);
     if (f && f.type !== "application/pdf") { setError("Please upload a PDF file."); return; }
@@ -191,16 +196,37 @@ export default function Home() {
 
   const submit = async () => {
     if (!file) return;
-    startTimer(28);
-    try {
+    startTimer(45); // allows headroom for a cold start + the scoring pipeline
+    const buildFd = () => {
       const fd = new FormData();
       fd.append("file", file);
       fd.append("redact", String(redact));
       fd.append("include_quick_wins", "true");
-      const res = await fetch(`${API}/evaluate`, { method: "POST", body: fd });
+      return fd;
+    };
+    try {
+      // Retry through cold starts: a sleeping free-tier instance can fail the
+      // first hit (network error, or a CORS-less 404/502/503 from the edge).
+      let res: Response | null = null;
+      for (let attempt = 0; attempt < 4; attempt++) {
+        try {
+          const r = await fetch(`${API}/evaluate`, { method: "POST", body: buildFd() });
+          if (r.status === 404 || r.status === 502 || r.status === 503) {
+            // origin not ready yet — wake it and retry
+          } else {
+            res = r;
+            break;
+          }
+        } catch {
+          // network / CORS failure ("failed to fetch") — likely still waking
+        }
+        await fetch(`${API}/health`).catch(() => {});
+        await new Promise((r) => setTimeout(r, 2500));
+      }
+      if (!res) throw new Error("The server is waking up (free tier). Give it a few seconds and try again.");
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body.detail || `Request failed (${res.status}).`);
+        throw new Error(typeof body.detail === "string" ? body.detail : `Request failed (${res.status}).`);
       }
       setProgress(100);
       setResult(await res.json());
